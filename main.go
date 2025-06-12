@@ -17,8 +17,16 @@ type state struct {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("ERROR: Not enough arguments provided")
+	var cmdName string
+	var cmdArgs []string
+	if len(os.Args) == 1 {
+		log.Fatal("ERROR: No command provided")
+	} else if len(os.Args) == 2 {
+		cmdName = os.Args[1]
+		cmdArgs = []string{}
+	} else {
+		cmdName = os.Args[1]
+		cmdArgs = os.Args[2:]
 	}
 
 	activeConfig, err := config.Read()
@@ -42,12 +50,13 @@ func main() {
 
 	availableCommands.register("login", handlerLogin)
 	availableCommands.register("register", handlerRegister)
+	availableCommands.register("reset", handlerResetDb)
 
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
 
 	err = availableCommands.run(&activeState, command{
-		Name: os.Args[1],
-		Args: os.Args[2:],
+		Name: cmdName,
+		Args: cmdArgs,
 	})
 	if err != nil {
 		log.Fatalf("ERROR: command failed: %v\n", err)
