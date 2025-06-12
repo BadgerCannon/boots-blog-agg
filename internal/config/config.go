@@ -67,16 +67,16 @@ func write(cfg Config) error {
 
 	config_file, err := os.OpenFile(config_file_path, os.O_WRONLY, 644)
 	if err != nil {
-		log.Printf("ERROR: Failed to open config file at '%v' due to error: %v", config_file_path, err)
-		return err
+		return fmt.Errorf("ERROR: Failed to open config file at '%v' due to error: %w", config_file_path, err)
 	}
 	defer config_file.Close()
+
+	os.WriteFile(config_file_path, nil, os.ModePerm)
 
 	je := json.NewEncoder(config_file)
 	err = je.Encode(cfg)
 	if err != nil {
-		log.Println("ERROR: Failed to encode json: ", err)
-		return err
+		return fmt.Errorf("ERROR: Failed to encode json: %w", err)
 	}
 	return nil
 }
