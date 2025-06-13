@@ -53,6 +53,9 @@ func main() {
 	availableCommands.register("reset", handlerResetDb)
 	availableCommands.register("users", handlerListUsers)
 
+	availableCommands.register("agg", handlerAgg)
+	availableCommands.register("addfeed", handlerAddFeed)
+
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
 
 	err = availableCommands.run(&activeState, command{
