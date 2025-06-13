@@ -55,6 +55,7 @@ func main() {
 
 	availableCommands.register("agg", handlerAgg)
 	availableCommands.register("addfeed", handlerAddFeed)
+	availableCommands.register("feeds", handlerListFeeds)
 
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
 

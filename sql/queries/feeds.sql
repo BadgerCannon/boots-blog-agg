@@ -9,3 +9,12 @@ VALUES (
     $3
 )
 RETURNING *;
+
+-- name: GetAllFeeds :many
+SELECT * FROM feeds;
+
+
+
+-- stop -- name: GetFeed :one
+-- SELECT * FROM feeds
+-- WHERE name = $1;
