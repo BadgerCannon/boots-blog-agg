@@ -12,13 +12,36 @@
             "program": "${workspaceFolder}"
         },
         {
-            "name": "blog-agg with args",
+            "name": "blog-agg following",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
                 "following"
+            ]
+        },
+        {
+            "name": "blog-agg add feed",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "addfeed",
+                "'Lanes Blog'",
+                "'https://www.wagslane.dev/index.xml'"
+            ]
+        },
+        {
+            "name": "blog-agg agg 10s",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "agg",
+                "10s"
             ]
         }
     ]

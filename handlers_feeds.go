@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/BadgerCannon/boot-blog-agg/internal/database"
 )
@@ -26,6 +27,16 @@ type RSSItem struct {
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
 	PubDate     string `xml:"pubDate"`
+}
+
+func (feed RSSFeed) String() string {
+	// return fmt.Sprintf("Feed Title: 			%v\nFeed Description: 		%v\nFeed Link: 			%v\nFeed Post Count:		%v", feed.Channel.Title, feed.Channel.Description, feed.Channel.Link, len(feed.Channel.Item))
+	return fmt.Sprintf("Feed Title: 			%v\nFeed Link: 			%v\nFeed Post Count:		%v", feed.Channel.Title, feed.Channel.Link, len(feed.Channel.Item))
+}
+
+func (item RSSItem) String() string {
+	// return fmt.Sprintf("| Post Title: 			%v\n| Post Description: 		%v\n| Post Date: 			%v\n| Post Link: 			%v", item.Title, item.Description, item.PubDate, item.Link)
+	return fmt.Sprintf("| Post Title: 			%v\n| Post Date: 			%v\n| Post Link: 			%v", item.Title, item.PubDate, item.Link)
 }
 
 func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
@@ -54,14 +65,7 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 		feed.Channel.Item[i].Description = html.UnescapeString(item.Description)
 	}
 
-	fmt.Println(feed)
-
 	return &feed, nil
-}
-
-func handlerAgg(s *state, cmd command) error {
-	fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	return nil
 }
 
 func handlerListFeeds(s *state, cmd command) error {
@@ -81,6 +85,44 @@ func handlerListFeeds(s *state, cmd command) error {
 	}
 
 	return nil
+}
+
+func handlerAgg(s *state, cmd command) error {
+	expected_args := 1
+	l := len(cmd.Args)
+	switch {
+	case l < expected_args || l > expected_args:
+		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+
+	default:
+		timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("failed to parse user defined duration : %w", err)
+		}
+		ticker := time.NewTicker(timeBetweenRequests)
+		for ; ; <-ticker.C {
+			scrapeFeeds(s)
+		}
+	}
+}
+
+func scrapeFeeds(s *state) {
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		fmt.Printf("ERROR: failed to get feed to fetch from db: %v", err)
+	}
+	feed, err := fetchFeed(context.Background(), nextFeed.Url)
+	if err != nil {
+		fmt.Printf("ERROR: failed to fetch feed: %v", err)
+	}
+	s.db.MarkFeedFetched(context.Background(), nextFeed.ID)
+	fmt.Println("+======================================================================+")
+	fmt.Println(feed)
+	fmt.Println("+----------------------------------------------------------------------+")
+	for _, post := range feed.Channel.Item {
+		fmt.Println(post)
+		fmt.Println("+----------------------------------------------------------------------+")
+	}
 }
 
 // Logged in Handlers
