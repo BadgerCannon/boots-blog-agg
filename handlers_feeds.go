@@ -64,7 +64,7 @@ func handlerAgg(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	l := len(cmd.Args)
 	switch {
 	case l < 2 || l > 2:
@@ -75,15 +75,10 @@ func handlerAddFeed(s *state, cmd command) error {
 			return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
 		}
 
-		dbUser, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
-		if err != nil {
-			return fmt.Errorf("failed to lookup user in db: %w", err)
-		}
-
 		dbFeed, err := s.db.AddFeed(context.Background(), database.AddFeedParams{
 			Name:   cmd.Args[0],
 			Url:    cmd.Args[1],
-			UserID: dbUser.ID,
+			UserID: user.ID,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to add feed to db: %w", err)
@@ -91,7 +86,7 @@ func handlerAddFeed(s *state, cmd command) error {
 		log.Println(dbFeed)
 
 		dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
-			UserID: dbUser.ID,
+			UserID: user.ID,
 			FeedID: dbFeed.ID,
 		})
 		if err != nil {
@@ -125,7 +120,7 @@ func handlerListFeeds(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowFeed(s *state, cmd command) error {
+func handlerFollowFeed(s *state, cmd command, user database.User) error {
 
 	expected_args := 1
 	l := len(cmd.Args)
@@ -143,13 +138,8 @@ func handlerFollowFeed(s *state, cmd command) error {
 			return fmt.Errorf("failed to lookup feed in db: %w", err)
 		}
 
-		dbUser, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
-		if err != nil {
-			return fmt.Errorf("failed to lookup user in db: %w", err)
-		}
-
 		dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
-			UserID: dbUser.ID,
+			UserID: user.ID,
 			FeedID: dbFeed.ID,
 		})
 		if err != nil {

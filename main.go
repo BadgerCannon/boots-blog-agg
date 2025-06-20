@@ -52,12 +52,12 @@ func main() {
 	availableCommands.register("register", handlerRegister)
 	availableCommands.register("reset", handlerResetDb)
 	availableCommands.register("users", handlerListUsers)
-	availableCommands.register("following", handlerFollowing)
+	availableCommands.register("following", middlewareLoggedIn(handlerFollowing))
 
 	availableCommands.register("agg", handlerAgg)
-	availableCommands.register("addfeed", handlerAddFeed)
+	availableCommands.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	availableCommands.register("feeds", handlerListFeeds)
-	availableCommands.register("follow", handlerFollowFeed)
+	availableCommands.register("follow", middlewareLoggedIn(handlerFollowFeed))
 
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
 

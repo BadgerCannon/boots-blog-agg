@@ -103,7 +103,8 @@ func handlerResetDb(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowing(s *state, cmd command) error {
+// func handlerFollowing(s *state, cmd command) error {
+func handlerFollowing(s *state, cmd command, user database.User) error {
 
 	expected_args := 0
 	l := len(cmd.Args)
@@ -111,12 +112,8 @@ func handlerFollowing(s *state, cmd command) error {
 	case l < expected_args || l > expected_args:
 		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
 	default:
-		dbUser, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
-		if err != nil {
-			return fmt.Errorf("failed to lookup user in db: %w", err)
-		}
 
-		dbFeedFollows, err := s.db.GetFeedFollowsForUser(context.Background(), dbUser.ID)
+		dbFeedFollows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 		if err != nil {
 			return fmt.Errorf("failed to get follows for user in db: %w", err)
 		}
