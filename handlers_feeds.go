@@ -150,3 +150,31 @@ func handlerFollowFeed(s *state, cmd command, user database.User) error {
 		return nil
 	}
 }
+
+func handlerUnfollowFeed(s *state, cmd command, user database.User) error {
+	expected_args := 1
+	l := len(cmd.Args)
+	switch {
+	case l < expected_args || l > expected_args:
+		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+
+	default:
+		if _, err := url.ParseRequestURI(cmd.Args[0]); err != nil {
+			return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
+		}
+
+		dbFeed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("failed to lookup feed in db: %w", err)
+		}
+
+		err = s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+			UserID: user.ID,
+			FeedID: dbFeed.ID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to unfollow feed: %w", err)
+		}
+		return nil
+	}
+}

@@ -58,6 +58,7 @@ func main() {
 	availableCommands.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	availableCommands.register("feeds", handlerListFeeds)
 	availableCommands.register("follow", middlewareLoggedIn(handlerFollowFeed))
+	availableCommands.register("unfollow", middlewareLoggedIn(handlerUnfollowFeed))
 
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
 
