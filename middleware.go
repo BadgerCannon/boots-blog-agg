@@ -14,7 +14,6 @@ func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) 
 		if err != nil {
 			return fmt.Errorf("failed to lookup user in db: %w", err)
 		}
-		handler(s, cmd, dbUser)
-		return nil
+		return handler(s, cmd, dbUser)
 	}
 }
