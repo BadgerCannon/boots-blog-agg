@@ -64,6 +64,27 @@ func handlerAgg(s *state, cmd command) error {
 	return nil
 }
 
+func handlerListFeeds(s *state, cmd command) error {
+
+	dbFeeds, err := s.db.GetAllFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get feeds from db: %w", err)
+	}
+
+	for _, feed := range dbFeeds {
+		dbUser, err := s.db.GetUserByID(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("failed to get user from db: %w", err)
+		}
+		log.Println("Feed created by", dbUser.Name)
+		log.Println(feed)
+	}
+
+	return nil
+}
+
+// Logged in Handlers
+
 func handlerAddFeed(s *state, cmd command, user database.User) error {
 	l := len(cmd.Args)
 	switch {
@@ -101,27 +122,7 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 	}
 }
 
-func handlerListFeeds(s *state, cmd command) error {
-
-	dbFeeds, err := s.db.GetAllFeeds(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to get feeds from db: %w", err)
-	}
-
-	for _, feed := range dbFeeds {
-		dbUser, err := s.db.GetUserByID(context.Background(), feed.UserID)
-		if err != nil {
-			return fmt.Errorf("failed to get user from db: %w", err)
-		}
-		log.Println("Feed created by", dbUser.Name)
-		log.Println(feed)
-	}
-
-	return nil
-}
-
 func handlerFollowFeed(s *state, cmd command, user database.User) error {
-
 	expected_args := 1
 	l := len(cmd.Args)
 	switch {

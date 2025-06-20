@@ -13,7 +13,6 @@ import (
 )
 
 func handlerRegister(s *state, cmd command) error {
-
 	switch len(cmd.Args) {
 	case 0:
 		return errors.New("no username provided")
@@ -70,7 +69,6 @@ func handlerLogin(s *state, cmd command) error {
 }
 
 func handlerListUsers(s *state, cmd command) error {
-
 	if len(cmd.Args) > 0 {
 		return fmt.Errorf("too many arguments")
 	}
@@ -91,7 +89,6 @@ func handlerListUsers(s *state, cmd command) error {
 }
 
 func handlerResetDb(s *state, cmd command) error {
-
 	if len(cmd.Args) > 0 {
 		return fmt.Errorf("too many arguments")
 	}
@@ -103,9 +100,8 @@ func handlerResetDb(s *state, cmd command) error {
 	return nil
 }
 
-// func handlerFollowing(s *state, cmd command) error {
+// Logged in Handlers
 func handlerFollowing(s *state, cmd command, user database.User) error {
-
 	expected_args := 0
 	l := len(cmd.Args)
 	switch {
