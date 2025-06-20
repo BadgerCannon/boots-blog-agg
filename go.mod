@@ -1,4 +1,4 @@
-module github.com/BadgerCannon/boots-go-blog-agg
+module github.com/BadgerCannon/boot-blog-agg
 
 go 1.23.4
 

@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/BadgerCannon/boots-go-blog-agg/internal/config"
+	"github.com/BadgerCannon/boot-blog-agg/internal/config"
 
-	"github.com/BadgerCannon/boots-go-blog-agg/internal/database"
+	"github.com/BadgerCannon/boot-blog-agg/internal/database"
 	_ "github.com/lib/pq"
 )
 
@@ -52,10 +52,12 @@ func main() {
 	availableCommands.register("register", handlerRegister)
 	availableCommands.register("reset", handlerResetDb)
 	availableCommands.register("users", handlerListUsers)
+	availableCommands.register("following", handlerFollowing)
 
 	availableCommands.register("agg", handlerAgg)
 	availableCommands.register("addfeed", handlerAddFeed)
 	availableCommands.register("feeds", handlerListFeeds)
+	availableCommands.register("follow", handlerFollowFeed)
 
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
 

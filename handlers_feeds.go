@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/BadgerCannon/boots-go-blog-agg/internal/database"
+	"github.com/BadgerCannon/boot-blog-agg/internal/database"
 )
 
 type RSSFeed struct {
@@ -88,13 +88,24 @@ func handlerAddFeed(s *state, cmd command) error {
 		if err != nil {
 			return fmt.Errorf("failed to add feed to db: %w", err)
 		}
-		log.Printf("dbFeed: %v\n", dbFeed)
+		log.Println(dbFeed)
+
+		dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
+			UserID: dbUser.ID,
+			FeedID: dbFeed.ID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add feed follow to db: %w", err)
+		}
+		log.Println(dbFeedFollow)
+
 		return nil
 
 	default:
 		return fmt.Errorf("unexpected (impossible?) switch fallthrough")
 	}
 }
+
 func handlerListFeeds(s *state, cmd command) error {
 
 	dbFeeds, err := s.db.GetAllFeeds(context.Background())
@@ -112,4 +123,39 @@ func handlerListFeeds(s *state, cmd command) error {
 	}
 
 	return nil
+}
+
+func handlerFollowFeed(s *state, cmd command) error {
+
+	expected_args := 1
+	l := len(cmd.Args)
+	switch {
+	case l < expected_args || l > expected_args:
+		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+
+	default:
+		if _, err := url.ParseRequestURI(cmd.Args[0]); err != nil {
+			return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
+		}
+
+		dbFeed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("failed to lookup feed in db: %w", err)
+		}
+
+		dbUser, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
+		if err != nil {
+			return fmt.Errorf("failed to lookup user in db: %w", err)
+		}
+
+		dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
+			UserID: dbUser.ID,
+			FeedID: dbFeed.ID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add feed follow to db: %w", err)
+		}
+		log.Println(dbFeedFollow)
+		return nil
+	}
 }

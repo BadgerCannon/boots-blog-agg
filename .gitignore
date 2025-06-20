@@ -28,4 +28,4 @@ go.work.sum
 .gatorconfig.json
 
 # ignore built binary
-boots-go-blog-agg
+boot-blog-agg

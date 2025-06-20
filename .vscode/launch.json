@@ -18,8 +18,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
-                "login",
-                "bun"
+                "following"
             ]
         }
     ]
