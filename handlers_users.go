@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/BadgerCannon/boot-blog-agg/internal/database"
@@ -120,4 +121,39 @@ func handlerFollowing(s *state, cmd command, user database.User) error {
 
 		return nil
 	}
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	expected_args := 1
+	var postLimit int32 // database.GetPostsforUserParams specifies int32
+	l := len(cmd.Args)
+	switch {
+	case l < expected_args:
+		postLimit = 2
+	case l > expected_args:
+		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+	default:
+		var err error
+		limitArg, err := strconv.ParseInt(cmd.Args[0], 10, 32) // returns int64 _limited_ to int32 range
+		if err != nil {
+			return fmt.Errorf("post limit must be numeric")
+		}
+		postLimit = int32(limitArg)
+	}
+
+	dbPosts, err := s.db.GetPostsforUser(context.Background(), database.GetPostsforUserParams{
+		UserID: user.ID,
+		Limit:  postLimit,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get posts for user in db: %w", err)
+	}
+
+	for _, post := range dbPosts {
+		fmt.Println("=====================================================")
+		fmt.Println(post)
+	}
+	fmt.Println("=====================================================")
+
+	return nil
 }

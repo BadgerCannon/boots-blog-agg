@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"html"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/BadgerCannon/boot-blog-agg/internal/database"
+	"github.com/lib/pq"
 )
 
 type RSSFeed struct {
@@ -106,22 +108,66 @@ func handlerAgg(s *state, cmd command) error {
 	}
 }
 
+func parsePostDate(post_date string) (time.Time, error) {
+	layouts := []string{
+		time.RFC822,
+		time.RFC1123Z, // matches examples
+		time.RFC822Z,
+		time.RFC850,
+		time.RFC1123,
+		time.RFC3339,
+		time.RFC3339Nano,
+		time.Layout,
+		time.ANSIC,
+		time.UnixDate,
+		time.RubyDate,
+	}
+	for _, layout := range layouts {
+		parsedDate, err := time.Parse(layout, post_date)
+		if err == nil {
+			return parsedDate, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unable to parse date '%v' with configured layouts", post_date)
+}
+
 func scrapeFeeds(s *state) {
 	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	fmt.Printf("INFO: Scraping %v\n", nextFeed.Name)
 	if err != nil {
 		fmt.Printf("ERROR: failed to get feed to fetch from db: %v", err)
+		return
 	}
 	feed, err := fetchFeed(context.Background(), nextFeed.Url)
 	if err != nil {
 		fmt.Printf("ERROR: failed to fetch feed: %v", err)
+		return
 	}
 	s.db.MarkFeedFetched(context.Background(), nextFeed.ID)
-	fmt.Println("+======================================================================+")
-	fmt.Println(feed)
-	fmt.Println("+----------------------------------------------------------------------+")
 	for _, post := range feed.Channel.Item {
-		fmt.Println(post)
-		fmt.Println("+----------------------------------------------------------------------+")
+		postDate, err := parsePostDate(post.PubDate)
+		if err != nil {
+			fmt.Printf("WARN: failed to save post %v to db: %v\n", post.Link, err)
+			continue
+		}
+		_, err = s.db.AddPost(context.Background(), database.AddPostParams{
+			FeedID:      nextFeed.ID,
+			Title:       post.Title,
+			Description: sql.NullString{String: post.Description, Valid: true},
+			Url:         post.Link,
+			PublishedAt: postDate,
+		})
+		if err != nil {
+			if pqErr, ok := err.(*pq.Error); ok {
+				if pqErr.Code != "23505" {
+					fmt.Printf("WARN: failed to save post %v to db: %v\n", post.Link, err)
+					continue
+				}
+			} else {
+				fmt.Printf("err: %v\n", err)
+				continue
+			}
+		}
 	}
 }
 

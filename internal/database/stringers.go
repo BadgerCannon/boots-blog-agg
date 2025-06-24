@@ -23,6 +23,11 @@ func (ff AddFeedFollowRow) String() string {
 }
 
 func (ff GetFeedFollowsForUserRow) String() string {
-	return fmt.Sprintf("database.FeedFollow { ID: %v, FeedID: %v, FeedName: %v, UserID: %v, UserName: %v, CreatedAt: %v, UpdatedAt: %v }",
-		ff.ID, ff.FeedID, ff.FeedName, ff.UserID, ff.UserName, ff.CreatedAt, ff.UpdatedAt)
+	return AddFeedFollowRow(ff).String()
+	// return fmt.Sprintf("database.FeedFollow { ID: %v, FeedID: %v, FeedName: %v, UserID: %v, UserName: %v, CreatedAt: %v, UpdatedAt: %v }",
+	// ff.ID, ff.FeedID, ff.FeedName, ff.UserID, ff.UserName, ff.CreatedAt, ff.UpdatedAt)
+}
+
+func (p Post) String() string {
+	return fmt.Sprintf("| Post Title: 			%v\n| Post Description: 		%v\n| Post Date: 			%v\n| Post Link: 			%v", p.Title, p.Description.String, p.PublishedAt, p.Url)
 }

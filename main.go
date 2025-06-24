@@ -53,6 +53,7 @@ func main() {
 	availableCommands.register("reset", handlerResetDb)
 	availableCommands.register("users", handlerListUsers)
 	availableCommands.register("following", middlewareLoggedIn(handlerFollowing))
+	availableCommands.register("browse", middlewareLoggedIn(handlerBrowse))
 
 	availableCommands.register("agg", handlerAgg)
 	availableCommands.register("addfeed", middlewareLoggedIn(handlerAddFeed))
