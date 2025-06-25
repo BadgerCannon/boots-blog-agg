@@ -17,18 +17,6 @@ type state struct {
 }
 
 func main() {
-	var cmdName string
-	var cmdArgs []string
-	if len(os.Args) == 1 {
-		log.Fatal("ERROR: No command provided")
-	} else if len(os.Args) == 2 {
-		cmdName = os.Args[1]
-		cmdArgs = []string{}
-	} else {
-		cmdName = os.Args[1]
-		cmdArgs = os.Args[2:]
-	}
-
 	activeConfig, err := config.Read()
 	if err != nil {
 		log.Fatal("ERROR: Failed to load config: ", "err", err)
@@ -62,7 +50,17 @@ func main() {
 	availableCommands.register("unfollow", middlewareLoggedIn(handlerUnfollowFeed))
 
 	// slog.Debug("msg", "activeState", activeState, "os.Args", os.Args, "availableCommands", availableCommands)
-
+	var cmdName string
+	var cmdArgs []string
+	if len(os.Args) == 1 {
+		log.Fatalf("ERROR: No command provided\n\n%v\n", availableCommands.listCommands())
+	} else if len(os.Args) == 2 {
+		cmdName = os.Args[1]
+		cmdArgs = []string{}
+	} else {
+		cmdName = os.Args[1]
+		cmdArgs = os.Args[2:]
+	}
 	err = availableCommands.run(&activeState, command{
 		Name: cmdName,
 		Args: cmdArgs,

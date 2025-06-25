@@ -43,6 +43,16 @@
                 "agg",
                 "10s"
             ]
+        },
+        {
+            "name": "blog-agg browse",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "browse"
+            ]
         }
     ]
 }

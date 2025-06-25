@@ -71,6 +71,9 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 }
 
 func handlerListFeeds(s *state, cmd command) error {
+	usage := "Usage: boot-blog-agg feeds\nList the feeds configured for scraping, and which user"
+	args_len := len(cmd.Args)
+	checkUsage(0, 0, args_len, usage)
 
 	dbFeeds, err := s.db.GetAllFeeds(context.Background())
 	if err != nil {
@@ -90,21 +93,17 @@ func handlerListFeeds(s *state, cmd command) error {
 }
 
 func handlerAgg(s *state, cmd command) error {
-	expected_args := 1
-	l := len(cmd.Args)
-	switch {
-	case l < expected_args || l > expected_args:
-		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+	usage := "Usage: boot-blog-agg register USERNAME\nRegister a new user and login."
+	args_len := len(cmd.Args)
+	checkUsage(0, 0, args_len, usage)
 
-	default:
-		timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
-		if err != nil {
-			return fmt.Errorf("failed to parse user defined duration : %w", err)
-		}
-		ticker := time.NewTicker(timeBetweenRequests)
-		for ; ; <-ticker.C {
-			scrapeFeeds(s)
-		}
+	timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse user defined duration : %w", err)
+	}
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
 	}
 }
 
@@ -174,95 +173,81 @@ func scrapeFeeds(s *state) {
 // Logged in Handlers
 
 func handlerAddFeed(s *state, cmd command, user database.User) error {
-	l := len(cmd.Args)
-	switch {
-	case l < 2 || l > 2:
-		return fmt.Errorf("incorrect number of arguments, expected 2 got %v", l)
+	usage := "Usage: boot-blog-agg addfeed NAME URL\nAdd a feed to gator for scraping."
+	args_len := len(cmd.Args)
+	checkUsage(2, 2, args_len, usage)
 
-	case l == 2:
-		if _, err := url.ParseRequestURI(cmd.Args[1]); err != nil {
-			return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
-		}
-
-		dbFeed, err := s.db.AddFeed(context.Background(), database.AddFeedParams{
-			Name:   cmd.Args[0],
-			Url:    cmd.Args[1],
-			UserID: user.ID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add feed to db: %w", err)
-		}
-		log.Println(dbFeed)
-
-		dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
-			UserID: user.ID,
-			FeedID: dbFeed.ID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add feed follow to db: %w", err)
-		}
-		log.Println(dbFeedFollow)
-
-		return nil
-
-	default:
-		return fmt.Errorf("unexpected (impossible?) switch fallthrough")
+	if _, err := url.ParseRequestURI(cmd.Args[1]); err != nil { // don't need a url.*URL struct, just need to check the string is a valid url
+		return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
 	}
+
+	dbFeed, err := s.db.AddFeed(context.Background(), database.AddFeedParams{
+		Name:   cmd.Args[0],
+		Url:    cmd.Args[1],
+		UserID: user.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add feed to db: %w", err)
+	}
+	log.Println(dbFeed)
+
+	dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
+		UserID: user.ID,
+		FeedID: dbFeed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add feed follow to db: %w", err)
+	}
+	log.Println(dbFeedFollow)
+
+	return nil
 }
 
 func handlerFollowFeed(s *state, cmd command, user database.User) error {
-	expected_args := 1
-	l := len(cmd.Args)
-	switch {
-	case l < expected_args || l > expected_args:
-		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+	usage := "Usage: boot-blog-agg follow URL\nFollow a feed that has already been added to gator by another user by URL."
+	args_len := len(cmd.Args)
+	checkUsage(1, 1, args_len, usage)
 
-	default:
-		if _, err := url.ParseRequestURI(cmd.Args[0]); err != nil {
-			return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
-		}
-
-		dbFeed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
-		if err != nil {
-			return fmt.Errorf("failed to lookup feed in db: %w", err)
-		}
-
-		dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
-			UserID: user.ID,
-			FeedID: dbFeed.ID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add feed follow to db: %w", err)
-		}
-		log.Println(dbFeedFollow)
-		return nil
+	if _, err := url.ParseRequestURI(cmd.Args[0]); err != nil { // don't need a url.*URL struct, just need to check the string is a valid url
+		return fmt.Errorf("failed to parse URL '%v'", cmd.Args[0])
 	}
+
+	dbFeed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("failed to lookup feed in db: %w", err)
+	}
+
+	dbFeedFollow, err := s.db.AddFeedFollow(context.Background(), database.AddFeedFollowParams{
+		UserID: user.ID,
+		FeedID: dbFeed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add feed follow to db: %w", err)
+	}
+	log.Println(dbFeedFollow)
+	return nil
 }
 
 func handlerUnfollowFeed(s *state, cmd command, user database.User) error {
-	expected_args := 1
-	l := len(cmd.Args)
-	switch {
-	case l < expected_args || l > expected_args:
-		return fmt.Errorf("incorrect number of arguments, expected %v got %v", expected_args, l)
+	usage := "Usage: boot-blog-agg unfollow URL\nUnfollow a feed by URL."
+	args_len := len(cmd.Args)
+	checkUsage(1, 1, args_len, usage)
 
-	default:
-		if _, err := url.ParseRequestURI(cmd.Args[0]); err != nil {
-			return fmt.Errorf("failed to parse URL '%v'", cmd.Args[1])
-		}
-
-		dbFeed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
-		if err != nil {
-			return fmt.Errorf("failed to lookup feed in db: %w", err)
-		}
-
-		err = s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
-			UserID: user.ID,
-			FeedID: dbFeed.ID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to unfollow feed: %w", err)
-		}
-		return nil
+	if _, err := url.ParseRequestURI(cmd.Args[0]); err != nil {
+		return fmt.Errorf("failed to parse URL '%v'", cmd.Args[0])
 	}
+
+	dbFeed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("failed to lookup feed in db: %w", err)
+	}
+
+	err = s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+		UserID: user.ID,
+		FeedID: dbFeed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to unfollow feed: %w", err)
+	}
+	return nil
 }
